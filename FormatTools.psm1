@@ -107,8 +107,8 @@ function Format-Banner
                 @( 0x38, 0x04, 0x04, 0x06, 0x04, 0x04, 0x38 ),   # '}'
                 @( 0x60, 0x92, 0x0C, 0x00, 0x00, 0x00, 0x00 )    # '~'
         );
-        $o = new-object psobject
-        $o | add-member NoteProperty OriginalStrings @()
+        $o = new-object -TypeName psobject
+        $o | add-member -MemberType NoteProperty -Name OriginalStrings -Value @()
         $o.psobject.typenames.Insert(0,"Banner")
     }
     PROCESS
@@ -148,7 +148,7 @@ function Format-Banner
         }
         #$output
         $sb = $executioncontext.invokecommand.NewScriptBlock("'$output'")
-        $o | add-member -force ScriptMethod ToString $sb
+        $o | add-member -force -MemberType ScriptMethod -Name ToString -Value $sb
         if ( $asString )
         {
             $o.ToString()
@@ -187,12 +187,12 @@ function New-TableFormat
         $SelectionSet = $null
         if ( $TypeCollection.Keys.Count -gt 1 )
         {
-            $SelectionSetName = ($typeCollection.keys |sort-object| %{ $_.split(".")[-1] }) -join "_"
+            $SelectionSetName = ($typeCollection.keys |sort-object| foreach-object { $_.split(".")[-1] }) -join "_"
             $SelectionSet = "<SelectionSets>",
                 " <SelectionSet>",
                 "  <Name>${SelectionSetName}</Name>",
                 "  <Types>"
-            $SelectionSet += $TypeCollection.Keys | %{ "    <TypeName>$_</TypeName>" }
+            $SelectionSet += $TypeCollection.Keys | foreach-object{ "    <TypeName>$_</TypeName>" }
             $SelectionSet += "  </Types>", " </SelectionSet>", "</SelectionSets>"
 
         }
@@ -242,7 +242,7 @@ function New-TableFormat
         #    }
         #}
         $NAME = $TN.split(".")[-1]
-        $sb = new-object System.Text.StringBuilder
+        $sb = new-object -TypeName System.Text.StringBuilder
         [void]$sb.Append("   <View>`n")
         [void]$sb.Append("    <Name>${Name}Table</Name>`n")
         [void]$sb.Append("    <ViewSelectedBy>`n")
