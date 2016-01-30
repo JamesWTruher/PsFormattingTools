@@ -74,7 +74,6 @@ PS> get-date | new-tableformat date,dayofweek
     <Name>DateTimeTable</Name>
     <ViewSelectedBy>
      <TypeName>System.DateTime</TypeName>
-
     </ViewSelectedBy>
     <TableControl>
      <TableHeaders>
