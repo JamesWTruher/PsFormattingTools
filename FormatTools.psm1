@@ -1,9 +1,9 @@
 function Format-Banner
 {
     [CmdletBinding()]
-    param ( 
+    param (
         [Parameter(ValueFromRemainingArguments,ValueFromPipeline=$true,position=0,mandatory=$true)]
-        [string[]]$strings, 
+        [string[]]$strings,
         [switch]$asString ,
         [char]$marker = "#"
         )
@@ -163,12 +163,12 @@ function Format-Banner
 function New-TableFormat
 {
     [CmdletBinding()]
-    param ( 
-        [Parameter(Mandatory=$true,ValueFromPipeline=$true)]$object, 
-        [Parameter(Mandatory=$true,Position=0)][object[]]$property, 
-        [Parameter(Mandatory=$false,Position=1)][string]$group, 
-        [switch]$auto, $name, 
-        [switch]$force ,
+    param (
+        [Parameter(Mandatory=$true,ValueFromPipeline=$true)]$object,
+        [Parameter(Mandatory=$true,Position=0)][object[]]$property,
+        [Parameter(Mandatory=$false,Position=1)][string]$group,
+        [switch]$auto, $name,
+        [switch]$force,
         [switch]$StandAlone
         )
     Begin
@@ -235,32 +235,32 @@ function New-TableFormat
         # we need to just keep going
         #foreach($p in $property)
         #{
-        #    if(! $object.psobject.members.item($p) -and ! $force) 
-        #    { 
+        #    if(! $object.psobject.members.item($p) -and ! $force)
+        #    {
         #        $property = $property | ?{ $_ -notmatch $p }
-        #        write-host -for red "$p does not exist, skipping" 
+        #        write-host -for red "$p does not exist, skipping"
         #    }
         #}
         $NAME = $TN.split(".")[-1]
         $sb = new-object -TypeName System.Text.StringBuilder
-        [void]$sb.Append("   <View>`n")
-        [void]$sb.Append("    <Name>${Name}Table</Name>`n")
-        [void]$sb.Append("    <ViewSelectedBy>`n")
-        [void]$sb.Append("     ${TypeNameSelector}`n")
-        [void]$sb.Append("    </ViewSelectedBy>`n")
+        [void]$sb.AppendLine("   <View>")
+        [void]$sb.AppendLine("    <Name>${Name}Table</Name>")
+        [void]$sb.AppendLine("    <ViewSelectedBy>")
+        [void]$sb.AppendLine("     ${TypeNameSelector}")
+        [void]$sb.AppendLine("    </ViewSelectedBy>")
         if ( $group )
         {
-            [void]$sb.Append("    <GroupBy>`n")
-            [void]$sb.Append("      <PropertyName>$group</PropertyName>`n")
-            [void]$sb.Append("      <Label>$group</Label>`n")
-            [void]$sb.Append("    </GroupBy>`n")
+            [void]$sb.AppendLine("    <GroupBy>")
+            [void]$sb.AppendLine("      <PropertyName>$group</PropertyName>")
+            [void]$sb.AppendLine("      <Label>$group</Label>")
+            [void]$sb.AppendLine("    </GroupBy>")
         }
-        [void]$sb.Append("    <TableControl>`n")
-        if ( $auto ) 
-        { 
-        [void]$sb.Append("     <AutoSize />`n") 
+        [void]$sb.AppendLine("    <TableControl>")
+        if ( $auto )
+        {
+            [void]$sb.AppendLine("     <AutoSize />")
         }
-        [void]$sb.Append("     <TableHeaders>`n")
+        [void]$sb.AppendLine("     <TableHeaders>")
         ###
         ### HEADER
         ###
@@ -268,13 +268,13 @@ function New-TableFormat
         {
             if ( $p -is "string" )
             {
-                [void]$sb.Append("      <TableColumnHeader><Label>${p}</Label></TableColumnHeader>`n")
+                [void]$sb.AppendLine("      <TableColumnHeader><Label>${p}</Label></TableColumnHeader>")
             }
             elseif ( $p -is "scriptblock" )
             {
-                [void]$sb.Append("      <TableColumnHeader>`n")
-                [void]$sb.Append("        <Label>" + $p.ToString() + "</Label>`n")
-                [void]$sb.Append("      </TableColumnHeader>`n")
+                [void]$sb.AppendLine("      <TableColumnHeader>")
+                [void]$sb.AppendLine("        <Label>" + $p.ToString() + "</Label>")
+                [void]$sb.AppendLine("      </TableColumnHeader>")
             }
             elseif ( $p -is "hashtable" )
             {
@@ -283,69 +283,81 @@ function New-TableFormat
                 {
                     throw "need Name or Label Key"
                 }
-                [void]$sb.Append("      <TableColumnHeader>`n")
-                [void]$sb.Append("        <Label>" + $p.$label + "</Label>`n")
+                [void]$sb.AppendLine("      <TableColumnHeader>")
+                [void]$sb.AppendLine("        <Label>" + $p.$label + "</Label>")
                 $Width = $p.Keys |?{$_ -match "^W"}
                 if ( $Width )
                 {
-                    [void]$sb.Append("        <Width>" + $p.$Width + "</Width>`n")
+                    [void]$sb.AppendLine("        <Width>" + $p.$Width + "</Width>")
                 }
                 $Align = $p.Keys |?{$_ -match "^A"}
                 if ( $Align )
                 {
-                    [void]$sb.Append("        <Alignment>" + $p.$align + "</Alignment>`n")
+                    [void]$sb.AppendLine("        <Alignment>" + $p.$align + "</Alignment>")
                 }
-                [void]$sb.Append("      </TableColumnHeader>`n")
+                [void]$sb.AppendLine("      </TableColumnHeader>")
                 # write-host -for red ("skipping " + $p.Name + " for now")
             }
+            else {
+                throw "unknown element '$p'"
+            }
         }
-        [void]$sb.Append("     </TableHeaders>`n")
+        [void]$sb.AppendLine("     </TableHeaders>")
         ###
         ### ROWS
         ###
-        [void]$sb.Append("     <TableRowEntries>`n")
-        [void]$sb.Append("      <TableRowEntry>`n")
-        [void]$sb.Append("       <TableColumnItems>`n")
+        [void]$sb.AppendLine("     <TableRowEntries>")
+        [void]$sb.AppendLine("      <TableRowEntry>")
+        [void]$sb.AppendLine("       <TableColumnItems>")
         foreach($p in $property)
         {
+            [void]$sb.Append("        <TableColumnItem>")
             if ( $p -is "string" )
             {
-                [void]$sb.Append("        <TableColumnItem><PropertyName>${p}</PropertyName></TableColumnItem>`n")
+                [void]$sb.Append("<PropertyName>${p}</PropertyName>")
             }
             elseif ( $p -is "Scriptblock" )
             {
-                [void]$sb.Append("      <TableColumnItem><ScriptBlock>" + $p.tostring() + "</ScriptBlock></TableColumnItem>`n") 
+                [void]$sb.Append("<ScriptBlock>" + $p.tostring() + "</ScriptBlock>")
             }
             elseif ( $p -is "hashtable" )
             {
                 $Name = $p.Keys | ?{$_ -match "^N" }
-                if ( $Name ) 
-                { 
-                    [void]$sb.Append("      <TableColumnItem><PropertyName>" + $p.$Name + "</PropertyName></TableColumnItem>`n") 
+                if ( $Name )
+                {
+                    [void]$sb.Append("<PropertyName>" + $p.$Name + "</PropertyName>")
+                }
+                $Format = $p.Keys |?{$_ -match "^F" }
+                if ( $Format ) {
+                    [void]$sb.Append("<FormatString>" +  $p.${Format} + "</FormatString>");
                 }
                 $Expression = $p.Keys |?{$_ -match "^E" }
                 if ( $Expression )
                 {
                     if ( $p.$Expression -is "string" )
                     {
-                        [void]$sb.Append("      <TableColumnItem><PropertyName>" + $p.$Expression + "</PropertyName></TableColumnItem>`n") 
+                        [void]$sb.Append("<PropertyName>" + $p.$Expression + "</PropertyName>")
                     }
                     elseif ( $p.$Expression -is "scriptblock" )
                     {
-                        [void]$sb.Append("      <TableColumnItem><ScriptBlock>" + $p.$Expression + "</ScriptBlock></TableColumnItem>`n") 
+                        [void]$sb.Append("<ScriptBlock>" + $p.$Expression + "</ScriptBlock>")
                     }
                 }
-                else 
-                { 
-                    [void]$sb.Append("      <TableColumnItem><PropertyName>" + $p.Label + "</PropertyName></TableColumnItem>`n") 
+                else
+                {
+                    [void]$sb.Append("<PropertyName>" + $p.Label + "</PropertyName>")
                 }
             }
+            else {
+                throw "Unknown element"
+            }
+            [void]$sb.AppendLine("</TableColumnItem>")
         }
-        [void]$sb.Append("       </TableColumnItems>`n")
-        [void]$sb.Append("      </TableRowEntry>`n")
-        [void]$sb.Append("     </TableRowEntries>`n")
-        [void]$sb.Append("    </TableControl>`n")
-        [void]$sb.Append("   </View>`n")
+        [void]$sb.AppendLine("       </TableColumnItems>")
+        [void]$sb.AppendLine("      </TableRowEntry>")
+        [void]$sb.AppendLine("     </TableRowEntries>")
+        [void]$sb.AppendLine("    </TableControl>")
+        [void]$sb.AppendLine("   </View>")
         $sb.ToString()
         if ( $StandAlone )
         {
@@ -403,7 +415,7 @@ function Format-String
             <#
             if (($line.length + $word.length + 1) -gt $columns )
             {
-                
+
             }
                 if ( ($line.length + $word.length + 1 ) -gt $columns )
                 {
