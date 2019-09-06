@@ -367,6 +367,141 @@ function New-TableFormat
     }
 }
 
+
+#
+# attempt to create a custom format declaration based
+# on a template. It needs a lot of work.
+# it currently only handles one field per line
+#
+function New-CustomFormat
+{
+    param ( $file, [switch]$help )
+if ( $args -or $help )
+{
+@'
+Create a Custom Format Entry based on a template.
+The first 2 lines must be VIEWNAME and TYPENAME
+after that, the template starts. Properties are
+enclosed in "[...]" and script properties are enclosed 
+in  "{...}"
+
+Example:
+
+VIEWNAME=D0001_1
+TYPENAME=SPInventory
+Inventory of Windows XP Service Packs
+Taken [date]
+Computers Running Windows XP : [count]
+
+Service Pack 1
+--------------
+    {[string]::Join("`n",$_.SP1)}
+Total number: {$_.SP1.Count}
+
+
+'@
+
+    return
+}
+$lines = [collections.arraylist]::new()
+$lines.InsertRange(0,(get-content $file))
+$Conf = $false
+$Form = $false
+if ( $lines[0] -notmatch "VIEWNAME=" ) { write-error "bad template"; exit }
+$Junk,$VIEWNAME = $lines[0].split("=")
+if ( $lines[1] -notmatch "TYPENAME=" ) { write-error "bad template"; exit }
+$Junk,$TYPENAME = $lines[1].split("=")
+$lines.RemoveRange(0,2)
+
+@"
+<Configuration>
+ <ViewDefinitions>
+  <View>
+   <Name>${VIEWNAME}</Name>
+   <ViewSelectedBy>
+    <TypeName>${TYPENAME}</TypeName>
+   </ViewSelectedBy>
+   <CustomControl>
+    <CustomEntries>
+     <CustomEntry>
+      <CustomItem>
+"@
+
+function propFrame 
+{
+param ( $propertyName, $indent = 4)
+$frame = @"
+       <Frame>
+        <LeftIndent>${indent}</LeftIndent>
+        <CustomItem>
+         <ExpressionBinding>
+          <PropertyName>${PropertyName}</PropertyName>
+         </ExpressionBinding>
+         <NewLine/>
+        </CustomItem>
+       </Frame>
+"@
+$frame
+}
+function exprFrame
+{
+param ( $script, $indent = 0 )
+$frame = @"
+       <Frame>
+        <LeftIndent>0</LeftIndent>
+         <CustomItem>
+          <ExpressionBinding>
+           <ScriptBlock>${script}</ScriptBlock>
+          </ExpressionBinding>
+          <NewLine/>
+        </CustomItem>
+       </Frame>
+"@
+$frame
+}
+
+
+foreach ( $line in $lines )
+{
+    if ( $line -match "(.*){(.*)\}(.*)" )
+    {
+        $text = $matches[1]
+        "       <Text>${text}</Text>"
+        exprFrame $matches[2]
+    }
+    elseif ( $line -match "(?<indent>\s*)(?<tag>\w+).*\[(?<property>.[^]]*)]" ) # "(.*)\[(.*)\](.*)" )
+    {
+        #$text = $matches[1]
+        #"       <Text>${text}: </Text>"
+        #propFrame $matches[2]
+        $text = $matches.tag
+        "       <Text>${text}: </Text>"
+        propFrame $matches.property $matches.indent.length
+    }
+    elseif ( $line -notmatch "\[|{" )
+    {
+        if ( $line )
+        {
+            "       <Text>${line}</Text>"
+        }
+        "       <NewLine/>"
+    }
+    else {
+        write-warning "$line not matched"
+    }
+}
+
+@"
+      </CustomItem>
+     </CustomEntry>
+    </CustomEntries>
+   </CustomControl>
+  </View>
+ </ViewDefinitions>
+</Configuration>
+"@
+}
+
 function Format-String
 {
     [CmdletBinding()]
